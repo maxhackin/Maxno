@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Maxno</title>
+  <style>
+    :root {
+      --bg0: #000000;
+      --bg1: #0a0a0a;
+      --bg2: #111111;
+      --bg3: #1a1a1a;
+      --line: #ffffff;
+      --text: #ffffff;
+      --muted: #a0a0a0;
+      --accent: #ffffff;
+      --accent-dim: #e0e0e0;
+      --danger: #ffffff;
+      --shadow: none;
+      --radius: 0;
+      --title-h: 42px;
+      --side-w: 240px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Segoe UI", Inter, system-ui, sans-serif;
+      color: var(--text);
+      background: var(--bg0);
+      user-select: none;
+    }
+
+    button, textarea, input { font: inherit; }
+    input, textarea, #editor {
+      user-select: text !important;
+      -webkit-user-select: text !important;
+    }
+    button {
+      border: 0;
+      cursor: pointer;
+      color: inherit;
+      background: transparent;
+    }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .app {
+      height: 100%;
+      display: grid;
+      grid-template-rows: var(--title-h) 1fr 28px;
+    }
+
+    /* Titlebar */
+    .titlebar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 10px;
+      padding: 0 8px 0 14px;
+      border-bottom: 1px solid var(--line);
+      background: #000000;
+      -webkit-app-region: drag;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .mark {
+      width: 22px;
+      height: 22px;
+      border-radius: 0;
+      border: 1px solid #ffffff;
+      object-fit: cover;
+      display: block;
+      flex: 0 0 auto;
+      background: #111;
+      image-rendering: auto;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 650;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .brand .ver {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .title-actions, .win-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      -webkit-app-region: no-drag;
+    }
+    .chip, .win-btn, .icon-btn, .primary, .ghost, .danger {
+      -webkit-app-region: no-drag;
+    }
+    .chip {
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 0;
+      border: 1px solid #ffffff;
+      background: #000000;
+      color: #ffffff;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 0;
+      background: #666666;
+      box-shadow: none;
+    }
+    .dot.ok { background: #ffffff; }
+    .dot.wait { background: #cccccc; }
+    .dot.busy { background: #888888; }
+    .dot.bad { background: #444444; border: 1px solid #ffffff; }
+
+    .win-btn {
+      width: 36px;
+      height: 28px;
+      border-radius: 0;
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      border: 1px solid transparent;
+    }
+    .win-btn:hover { background: #ffffff; color: #000000; }
+    .win-btn.close:hover { background: #ffffff; color: #000000; }
+    .win-btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+    /* Body */
+    .body {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: var(--side-w) 1fr;
+    }
+
+    .sidebar {
+      border-right: 1px solid #ffffff;
+      background: #000000;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 0;
+    }
+    .side-head, .side-foot {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .side-foot { border-bottom: 0; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+    .side-head h2 {
+      margin: 0 0 8px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 650;
+    }
+    .clients {
+      display: grid;
+      gap: 8px;
+      max-height: 160px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+    .client {
+      padding: 10px;
+      border-radius: 0;
+      border: 1px solid #ffffff;
+      background: #0a0a0a;
+      display: grid;
+      gap: 4px;
+    }
+    .client .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+    .client .name { font-size: 13px; font-weight: 600; }
+    .client .meta { font-size: 11px; color: var(--muted); }
+    .pill {
+      font-size: 10px;
+      padding: 3px 7px;
+      border-radius: 0;
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 700;
+    }
+    .pill.off {
+      background: #000000;
+      color: #ffffff;
+      border-color: #ffffff;
+    }
+    .empty {
+      color: var(--muted);
+      font-size: 12px;
+      padding: 12px;
+      border: 1px solid #ffffff;
+      border-radius: 0;
+      text-align: center;
+    }
+
+    .nav {
+      padding: 10px;
+      display: grid;
+      gap: 6px;
+      align-content: start;
+      overflow: auto;
+    }
+    .nav-btn {
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 0;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid transparent;
+    }
+    .nav-btn:hover { background: #111111; color: #ffffff; }
+    .nav-btn.active {
+      background: #ffffff;
+      border-color: #ffffff;
+      color: #000000;
+    }
+    .nav-btn .ico {
+      width: 18px;
+      text-align: center;
+      opacity: 0.9;
+    }
+
+    .main {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 12px;
+      gap: 10px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .tabs {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      min-width: 0;
+      overflow: auto;
+    }
+    .tab {
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 0;
+      border: 1px solid #ffffff;
+      background: #000000;
+      color: #a0a0a0;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .tab.active {
+      color: #000000;
+      border-color: #ffffff;
+      background: #ffffff;
+    }
+    .tab .x {
+      width: 16px;
+      height: 16px;
+      border-radius: 0;
+      display: grid;
+      place-items: center;
+      color: inherit;
+    }
+    .tab .x:hover { background: #000000; color: #ffffff; }
+    .tab.active .x:hover { background: #000000; color: #ffffff; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .primary, .ghost, .danger {
+      height: 34px;
+      padding: 0 14px;
+      border-radius: 0;
+      font-weight: 650;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+    .primary {
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid #ffffff;
+      box-shadow: none;
+    }
+    .primary:hover { background: #d0d0d0; }
+    .ghost {
+      border: 1px solid #ffffff;
+      background: #000000;
+      color: #ffffff;
+    }
+    .ghost:hover { background: #ffffff; color: #000000; }
+    .danger {
+      border: 1px solid #ffffff;
+      background: #000000;
+      color: #ffffff;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .danger:hover { background: #ffffff; color: #000000; }
+
+    .editor-shell, .panel-card {
+      min-height: 0;
+      border-radius: 0;
+      border: 1px solid #ffffff;
+      background: #0a0a0a;
+      box-shadow: none;
+      overflow: hidden;
+    }
+    .editor-shell {
+      display: grid;
+      grid-template-rows: 34px 1fr;
+    }
+    .editor-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      border-bottom: 1px solid #ffffff;
+      color: #a0a0a0;
+      font-size: 12px;
+      background: #000000;
+    }
+    #editor {
+      width: 100%;
+      height: 100%;
+      resize: none;
+      border: 0;
+      outline: none;
+      padding: 14px 16px;
+      background: #000000;
+      color: #ffffff;
+      font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+      font-size: 13.5px;
+      line-height: 1.55;
+      user-select: text;
+      caret-color: #ffffff;
+    }
+    #editor::placeholder { color: #666666; }
+
+    .panel { display: none; min-height: 0; }
+    .panel.active { display: grid; min-height: 0; }
+    .panel-card { padding: 16px; overflow: auto; }
+    .panel-card h3 { margin: 0 0 6px; font-size: 16px; }
+    .panel-card p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .setting {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 0;
+      border: 1px solid #ffffff;
+      background: #000000;
+    }
+    .setting .label { display: grid; gap: 3px; }
+    .setting .label strong { font-size: 13px; }
+    .setting .label span { font-size: 12px; color: var(--muted); }
+    .switch {
+      width: 42px;
+      height: 24px;
+      border-radius: 0;
+      background: #000000;
+      border: 1px solid #ffffff;
+      position: relative;
+      flex: 0 0 auto;
+    }
+    .switch.on { background: #ffffff; border-color: #ffffff; }
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 0;
+      background: #ffffff;
+      transition: left 0.15s ease, background 0.15s ease;
+    }
+    .switch.on::after { left: 20px; background: #000000; }
+
+    .quick {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .statusbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 12px;
+      border-top: 1px solid #ffffff;
+      background: #000000;
+      color: #a0a0a0;
+      font-size: 11px;
+    }
+    .statusbar .left, .statusbar .right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+    }
+    #toast {
+      position: fixed;
+      right: 16px;
+      bottom: 42px;
+      min-width: 180px;
+      max-width: 320px;
+      padding: 10px 12px;
+      border-radius: 0;
+      border: 1px solid #ffffff;
+      background: #000000;
+      color: #ffffff;
+      box-shadow: none;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      font-size: 13px;
+      z-index: 20;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 900px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .body { grid-template-columns: 200px 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="titlebar">
+      <div class="brand">
+        <img class="mark" src="./bob.jpg" alt="logo" width="22" height="22" />
+        <h1>Maxno <span class="ver" id="versionLabel">custom ui</span></h1>
+      </div>
+      <div class="title-actions">
+        <div class="chip" title="Client status">
+          <span class="dot" id="statusDot"></span>
+          <span id="statusText">Idle</span>
+        </div>
+      </div>
+      <div class="win-controls">
+        <button class="win-btn" id="btnMin" title="Minimize" aria-label="Minimize">
+          <svg viewBox="0 0 12 12"><path d="M2 6h8"/></svg>
+        </button>
+        <button class="win-btn" id="btnMax" title="Maximize" aria-label="Maximize">
+          <svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7" rx="1"/></svg>
+        </button>
+        <button class="win-btn close" id="btnClose" title="Close" aria-label="Close">
+          <svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3L3 9"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="body">
+      <aside class="sidebar">
+        <div class="side-head">
+          <h2>Clients</h2>
+          <div class="clients" id="clientList">
+            <div class="empty">No Roblox clients detected</div>
+          </div>
+        </div>
+        <nav class="nav">
+          <button class="nav-btn active" data-view="editor"><span class="ico">⌘</span> Editor</button>
+          <button class="nav-btn" data-view="settings"><span class="ico">⚙</span> Settings</button>
+          <button class="nav-btn" data-view="about"><span class="ico">✦</span> About</button>
+        </nav>
+        <div class="side-foot">
+          <button class="ghost" id="btnAutoexec" style="width:100%; justify-content:center;">Open Autoexec</button>
+          <button class="ghost" id="btnWorkspace" style="width:100%; justify-content:center;">Open Workspace</button>
+        </div>
+      </aside>
+
+      <section class="main">
+        <div class="toolbar">
+          <div class="tabs" id="tabs"></div>
+          <div class="actions">
+            <button class="ghost" id="btnNewTab">+ Tab</button>
+            <button class="ghost" id="btnImport">Import</button>
+            <button class="ghost" id="btnAttach">Attach</button>
+            <button class="primary" id="btnExecute">Execute</button>
+            <button class="danger" id="btnKill">Kill Roblox</button>
+          </div>
+        </div>
+
+        <div class="panel active" id="view-editor">
+          <div class="editor-shell">
+            <div class="editor-meta">
+              <span id="tabTitle">Script 1</span>
+              <span id="charCount">0 chars</span>
+            </div>
+            <textarea id="editor" spellcheck="false" placeholder="-- write a Luau script here"></textarea>
+          </div>
+        </div>
+
+        <div class="panel" id="view-settings">
+          <div class="panel-card">
+            <h3>Settings</h3>
+            <p>These map to the same backend toggles the original UI used.</p>
+            <div class="grid-2">
+              <div class="setting">
+                <div class="label">
+                  <strong>Auto Attach</strong>
+                  <span>Attach when a client appears</span>
+                </div>
+                <button class="switch" id="swAutoAttach" aria-label="Auto Attach"></button>
+              </div>
+              <div class="setting">
+                <div class="label">
+                  <strong>Always on Top</strong>
+                  <span>Keep this window above others</span>
+                </div>
+                <button class="switch" id="swTopmost" aria-label="Always on Top"></button>
+              </div>
+              <div class="setting">
+                <div class="label">
+                  <strong>Minimize to Tray</strong>
+                  <span>Closing hides to the tray</span>
+                </div>
+                <button class="switch" id="swTray" aria-label="Minimize to Tray"></button>
+              </div>
+              <div class="setting">
+                <div class="label">
+                  <strong>Discord RPC</strong>
+                  <span>Show activity on Discord</span>
+                </div>
+                <button class="switch" id="swRpc" aria-label="Discord RPC"></button>
+              </div>
+            </div>
+            <div style="height:14px"></div>
+            <div class="quick">
+              <button class="ghost" id="btnClear">Clear Editor</button>
+              <button class="ghost" id="btnSample">Insert Sample</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="view-about">
+          <div class="panel-card">
+            <h3>Custom Maxno UI</h3>
+            <p>
+              Fresh front-end shell wired to the existing Electron preload bridge.
+              Native attach/execute still go through <code>xeno.node</code> → <code>Xeno.dll</code>.
+            </p>
+            <div class="setting">
+              <div class="label">
+                <strong>Backend version</strong>
+                <span id="aboutVersion">loading…</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="statusbar">
+      <div class="left">
+        <span id="footStatus">Ready</span>
+        <span id="footClients">0 clients</span>
+      </div>
+      <div class="right">
+        <span>Custom GUI build</span>
+      </div>
+    </footer>
+  </div>
+  <div id="toast"></div>
+
+  <script>
+    const api = window.electronAPI || null;
+    const storageKey = "maxno-custom-ui-v1";
+
+    const state = {
+      tabs: [{ id: 1, name: "Script 1", code: "" }],
+      activeTab: 1,
+      nextId: 2,
+      clients: [],
+      autoAttach: false,
+      topmost: false,
+      tray: false,
+      rpc: false,
+      version: ""
+    };
+
+    const els = {
+      editor: document.getElementById("editor"),
+      tabs: document.getElementById("tabs"),
+      clientList: document.getElementById("clientList"),
+      statusDot: document.getElementById("statusDot"),
+      statusText: document.getElementById("statusText"),
+      footStatus: document.getElementById("footStatus"),
+      footClients: document.getElementById("footClients"),
+      versionLabel: document.getElementById("versionLabel"),
+      aboutVersion: document.getElementById("aboutVersion"),
+      tabTitle: document.getElementById("tabTitle"),
+      charCount: document.getElementById("charCount"),
+      toast: document.getElementById("toast"),
+      swAutoAttach: document.getElementById("swAutoAttach"),
+      swTopmost: document.getElementById("swTopmost"),
+      swTray: document.getElementById("swTray"),
+      swRpc: document.getElementById("swRpc")
+    };
+
+    let toastTimer = null;
+    function toast(msg) {
+      els.toast.textContent = msg;
+      els.toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2200);
+    }
+
+    function saveLocal() {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({
+          tabs: state.tabs,
+          activeTab: state.activeTab,
+          nextId: state.nextId,
+          autoAttach: state.autoAttach,
+          topmost: state.topmost,
+          tray: state.tray,
+          rpc: state.rpc
+        }));
+      } catch (_) {}
+    }
+
+    function loadLocal() {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.tabs) && data.tabs.length) state.tabs = data.tabs;
+        if (data.activeTab) state.activeTab = data.activeTab;
+        if (data.nextId) state.nextId = data.nextId;
+        state.autoAttach = !!data.autoAttach;
+        state.topmost = !!data.topmost;
+        state.tray = !!data.tray;
+        state.rpc = !!data.rpc;
+      } catch (_) {}
+    }
+
+    function activeTab() {
+      return state.tabs.find(t => t.id === state.activeTab) || state.tabs[0];
+    }
+
+    function setStatus(kind, text) {
+      els.statusDot.className = "dot" + (kind ? " " + kind : "");
+      els.statusText.textContent = text;
+      els.footStatus.textContent = text;
+    }
+
+    function renderTabs() {
+      els.tabs.innerHTML = "";
+      state.tabs.forEach(tab => {
+        const btn = document.createElement("button");
+        btn.className = "tab" + (tab.id === state.activeTab ? " active" : "");
+        btn.innerHTML = `<span>${tab.name}</span><span class="x" title="Close">×</span>`;
+        btn.addEventListener("click", (e) => {
+          if (e.target.classList.contains("x")) {
+            closeTab(tab.id);
+            return;
+          }
+          selectTab(tab.id);
+        });
+        els.tabs.appendChild(btn);
+      });
+    }
+
+    function selectTab(id) {
+      const current = activeTab();
+      if (current) current.code = els.editor.value;
+      state.activeTab = id;
+      const tab = activeTab();
+      els.editor.value = tab ? tab.code : "";
+      els.tabTitle.textContent = tab ? tab.name : "Script";
+      els.charCount.textContent = `${els.editor.value.length} chars`;
+      renderTabs();
+      saveLocal();
+    }
+
+    function closeTab(id) {
+      if (state.tabs.length === 1) {
+        state.tabs[0].code = "";
+        state.tabs[0].name = "Script 1";
+        selectTab(state.tabs[0].id);
+        toast("Cleared last tab");
+        return;
+      }
+      const idx = state.tabs.findIndex(t => t.id === id);
+      if (idx < 0) return;
+      state.tabs.splice(idx, 1);
+      if (state.activeTab === id) {
+        const next = state.tabs[Math.max(0, idx - 1)];
+        selectTab(next.id);
+      } else {
+        renderTabs();
+        saveLocal();
+      }
+    }
+
+    function newTab(name, code) {
+      const current = activeTab();
+      if (current) current.code = els.editor.value;
+      const id = state.nextId++;
+      const tab = { id, name: name || `Script ${id}`, code: code || "" };
+      state.tabs.push(tab);
+      selectTab(id);
+      toast(name ? `Opened ${name}` : "New tab");
+      return tab;
+    }
+
+    async function openFileResult(res) {
+      if (!res) return;
+      if (res.canceled) return;
+      if (!res.ok) {
+        toast(res.error || "Could not open file");
+        return;
+      }
+      newTab(res.name || "script.lua", res.content || "");
+    }
+
+    async function importFile() {
+      if (!api?.pickLocalFile) {
+        toast("Import unavailable");
+        return;
+      }
+      const res = await api.pickLocalFile();
+      await openFileResult(res);
+    }
+
+    function normalizeClient(raw) {
+      if (Array.isArray(raw)) {
+        const pid = raw[0];
+        const username = raw[1];
+        const third = raw[2];
+        const status = Number(raw[3] || 0);
+        const placeId = raw[4];
+        const versionLike = typeof third === "string" && String(third).toLowerCase().startsWith("version-");
+        return {
+          pid: pid != null ? String(pid) : "",
+          username: username != null ? String(username) : "",
+          playerName: versionLike ? "" : (third != null ? String(third) : ""),
+          status,
+          version: versionLike ? String(third) : null,
+          placeId: placeId != null ? placeId : null,
+          attached: status === 3 || status === 1
+        };
+      }
+      if (raw && typeof raw === "object") {
+        const status = Number(raw.status != null ? raw.status : 0);
+        const pid = raw.pid != null ? raw.pid : (raw.Pid != null ? raw.Pid : (raw.PID != null ? raw.PID : raw.processId));
+        return {
+          pid: pid != null ? String(pid) : "",
+          username: String(raw.username || raw.Username || raw.name || raw.Name || ""),
+          playerName: String(raw.playerName || raw.PlayerName || ""),
+          status,
+          version: raw.version || null,
+          placeId: raw.placeId != null ? raw.placeId : null,
+          attached: !!(raw.attached || raw.Attached || raw.isAttached || status === 3 || status === 1)
+        };
+      }
+      return null;
+    }
+
+    function clientPids(list) {
+      // Xeno /o expects Clients as a JSON array of STRING pids, e.g. ["25956"]
+      return (Array.isArray(list) ? list : [])
+        .map(normalizeClient)
+        .filter(Boolean)
+        .map(c => String(c.pid || "").trim())
+        .filter(p => /^\d+$/.test(p) && Number(p) > 0);
+    }
+
+    let hadAttachedBefore = false;
+    function renderClients(list) {
+      const normalized = (Array.isArray(list) ? list : []).map(normalizeClient).filter(Boolean);
+      state.clients = normalized;
+      els.footClients.textContent = `${state.clients.length} client${state.clients.length === 1 ? "" : "s"}`;
+      if (!state.clients.length) {
+        els.clientList.innerHTML = `<div class="empty">No Roblox clients detected</div>`;
+        if (els.statusText.textContent === "Attached") setStatus("", "Idle");
+        hadAttachedBefore = false;
+        return;
+      }
+      els.clientList.innerHTML = "";
+      state.clients.forEach((c, i) => {
+        const name = c.playerName || c.username || `Client ${i + 1}`;
+        const pid = c.pid || "?";
+        const attached = !!c.attached;
+        const el = document.createElement("div");
+        el.className = "client";
+        el.innerHTML = `
+          <div class="row">
+            <div class="name">${escapeHtml(String(name))}</div>
+            <span class="pill ${attached ? "" : "off"}">${attached ? "Attached" : "Idle"}</span>
+          </div>
+          <div class="meta">PID ${escapeHtml(String(pid))}</div>
+        `;
+        els.clientList.appendChild(el);
+      });
+      const anyAttached = state.clients.some(c => c.attached);
+      if (anyAttached) {
+        setStatus("ok", "Attached");
+        if (!hadAttachedBefore) {
+          hadAttachedBefore = true;
+          setTimeout(() => { runAttachNotice(); }, 800);
+        }
+      } else if (state.clients.length) {
+        setStatus("wait", "Client found");
+        hadAttachedBefore = false;
+      }
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, ch => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[ch]);
+    }
+
+    function setSwitch(el, on) {
+      el.classList.toggle("on", !!on);
+    }
+
+    function showView(name) {
+      document.querySelectorAll(".nav-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.view === name);
+      });
+      document.querySelectorAll(".panel").forEach(p => {
+        p.classList.toggle("active", p.id === "view-" + name);
+      });
+    }
+
+    async function refreshVersion() {
+      if (!api?.xenoVersion) return;
+      try {
+        const v = await api.xenoVersion();
+        state.version = v || "";
+        els.versionLabel.textContent = state.version ? `v${state.version}` : "custom ui";
+        els.aboutVersion.textContent = state.version || "unavailable";
+      } catch (_) {
+        els.aboutVersion.textContent = "unavailable";
+      }
+    }
+
+    async function refreshClients() {
+      if (!api?.xenoGetClients) return;
+      try {
+        const list = await api.xenoGetClients();
+        renderClients(list);
+      } catch (_) {}
+    }
+
+    const ATTACH_NOTICE_LUA = `-- Rewrite Xeno's built-in Roblox toast into Maxno + bob.jpg
+task.spawn(function()
+	local CoreGui = game:GetService("CoreGui")
+	local StarterGui = game:GetService("StarterGui")
+	local Players = game:GetService("Players")
+
+	local bobAsset = nil
+	if typeof(getcustomasset) == "function" then
+		local ok, asset = pcall(getcustomasset, "maxno_bob.jpg")
+		if ok and typeof(asset) == "string" and #asset > 0 then
+			bobAsset = asset
+		end
+	end
+
+	local function looksLikeXenoToast(text)
+		if typeof(text) ~= "string" then return false end
+		local t = string.lower(text)
+		return string.find(t, "xeno", 1, true) ~= nil
+			or t == "attached"
+			or string.find(t, "attached", 1, true) ~= nil
+	end
+
+	local function restyleNotificationRoot(root)
+		if not root or root:GetAttribute("MaxnoRestyled") then return end
+		local touched = false
+		for _, d in ipairs(root:GetDescendants()) do
+			if d:IsA("TextLabel") or d:IsA("TextButton") then
+				if looksLikeXenoToast(d.Text) then
+					touched = true
+					if string.lower(d.Text) == "xeno" or string.find(string.lower(d.Text), "xeno", 1, true) then
+						d.Text = "MAXNO"
+					end
+					if string.find(string.lower(d.Text), "attach", 1, true) then
+						d.Text = "MAXNO ATTACHED :3"
+					end
+				end
+			elseif d:IsA("ImageLabel") or d:IsA("ImageButton") then
+				if bobAsset then
+					-- only replace icons inside a toast we already identified
+					-- deferred: mark later
+				end
+			end
+		end
+		if touched then
+			root:SetAttribute("MaxnoRestyled", true)
+			if bobAsset then
+				for _, d in ipairs(root:GetDescendants()) do
+					if d:IsA("ImageLabel") or d:IsA("ImageButton") then
+						pcall(function()
+							d.Image = bobAsset
+							d.ImageContent = nil
+						end)
+						pcall(function()
+							d.Image = bobAsset
+						end)
+					end
+				end
+			end
+			-- force the main title/body if structure is Title+Text
+			local texts = {}
+			for _, d in ipairs(root:GetDescendants()) do
+				if (d:IsA("TextLabel") or d:IsA("TextButton")) and d.Text and #d.Text > 0 then
+					table.insert(texts, d)
+				end
+			end
+			table.sort(texts, function(a, b)
+				return (a.TextSize or 0) > (b.TextSize or 0)
+			end)
+			if texts[1] then texts[1].Text = "MAXNO" end
+			if texts[2] then texts[2].Text = "MAXNO ATTACHED :3" end
+			if #texts == 1 then texts[1].Text = "MAXNO ATTACHED :3" end
+		end
+	end
+
+	local function scan(container)
+		if not container then return end
+		for _, child in ipairs(container:GetDescendants()) do
+			if child:IsA("TextLabel") or child:IsA("TextButton") then
+				if looksLikeXenoToast(child.Text) then
+					-- climb a few parents to the toast frame
+					local root = child
+					for _ = 1, 6 do
+						if root.Parent and root.Parent ~= CoreGui then
+							root = root.Parent
+						end
+					end
+					restyleNotificationRoot(root)
+				end
+			end
+		end
+	end
+
+	-- Watch for the stock toast
+	local conn
+	conn = CoreGui.DescendantAdded:Connect(function(desc)
+		task.defer(function()
+			pcall(function()
+				if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+					if looksLikeXenoToast(desc.Text) then
+						local root = desc
+						for _ = 1, 6 do
+							if root.Parent and root.Parent ~= CoreGui then
+								root = root.Parent
+							end
+						end
+						restyleNotificationRoot(root)
+					end
+				elseif desc:IsA("Frame") or desc:IsA("ImageLabel") then
+					scan(desc)
+				end
+			end)
+		end)
+	end)
+
+	-- Initial scan + a few retries (toast can spawn slightly later)
+	for i = 1, 20 do
+		pcall(scan, CoreGui)
+		task.wait(0.15)
+	end
+
+	-- Also fire our own Roblox-style toast with bob icon
+	task.wait(0.2)
+	pcall(function()
+		local payload = {
+			Title = "MAXNO",
+			Text = "MAXNO ATTACHED :3",
+			Duration = 5,
+		}
+		if bobAsset then
+			payload.Icon = bobAsset
+		end
+		StarterGui:SetCore("SendNotification", payload)
+	end)
+
+	-- stop watching after a bit so we don't restyle unrelated toasts forever
+	task.delay(12, function()
+		if conn then conn:Disconnect() end
+	end)
+end)
+`;
+
+    let noticeCooldownUntil = 0;
+    async function runAttachNotice() {
+      const now = Date.now();
+      if (now < noticeCooldownUntil) return;
+      noticeCooldownUntil = now + 8000;
+      try {
+        await refreshClients();
+        let pids = clientPids(state.clients);
+        if (!pids.length) {
+          await new Promise(r => setTimeout(r, 1200));
+          await refreshClients();
+          pids = clientPids(state.clients);
+        }
+        if (!pids.length) return;
+        await fetch("http://localhost:3110/o", {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain",
+            Clients: JSON.stringify(pids)
+          },
+          body: ATTACH_NOTICE_LUA
+        });
+      } catch (_) {}
+    }
+
+    async function doAttach() {
+      if (!api?.xenoAttach) {
+        toast("Bridge unavailable");
+        return;
+      }
+      setStatus("busy", "Attaching…");
+      try {
+        api.setTaskbarStatus?.({ status: "attaching" });
+        const res = await api.xenoAttach();
+        if (res && res.ok) {
+          setStatus("ok", "Attached");
+          api.setTaskbarStatus?.({ status: "attached", attachedClients: state.clients.length || 1 });
+          toast("Attached — sending in-game notice");
+          setTimeout(() => { runAttachNotice(); }, 1500);
+        } else {
+          setStatus("bad", "Attach failed");
+          api.setTaskbarStatus?.({ status: "failed" });
+          toast("Attach failed");
+        }
+      } catch (_) {
+        setStatus("bad", "Attach failed");
+        toast("Attach error");
+      }
+      refreshClients();
+    }
+
+    async function doExecute() {
+      const code = els.editor.value;
+      const tab = activeTab();
+      if (tab) tab.code = code;
+      saveLocal();
+      if (!code.trim()) {
+        toast("Editor is empty");
+        return;
+      }
+      await refreshClients();
+      let pids = clientPids(state.clients);
+      if (!pids.length) {
+        await new Promise(r => setTimeout(r, 500));
+        await refreshClients();
+        pids = clientPids(state.clients);
+      }
+      if (!pids.length) {
+        toast("No clients to run on — Attach first");
+        return;
+      }
+      try {
+        const res = await fetch("http://localhost:3110/o", {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain",
+            Clients: JSON.stringify(pids.map(String))
+          },
+          body: code
+        });
+        if (!res.ok) {
+          let detail = "";
+          try { detail = (await res.text()) || ""; } catch (_) {}
+          toast(`Execute failed (${res.status})${detail ? ": " + detail.slice(0, 80) : ""}`);
+          return;
+        }
+        toast(`Executed on ${pids.length} client${pids.length === 1 ? "" : "s"}`);
+      } catch (err) {
+        toast("Execute failed — server unreachable");
+      }
+    }
+
+    async function doKill() {
+      if (!api?.xenoKillRoblox) {
+        toast("Kill unavailable");
+        return;
+      }
+      try {
+        const res = await api.xenoKillRoblox();
+        toast(res && res.killed ? "Roblox closed" : "No process closed");
+        refreshClients();
+      } catch (_) {
+        toast("Kill failed");
+      }
+    }
+
+    function wire() {
+      document.getElementById("btnMin").onclick = () => api?.minimize?.();
+      document.getElementById("btnMax").onclick = () => api?.maximize?.();
+      document.getElementById("btnClose").onclick = () => api?.close?.();
+      document.getElementById("btnNewTab").onclick = () => newTab();
+      document.getElementById("btnImport").onclick = importFile;
+      document.getElementById("btnAttach").onclick = doAttach;
+      document.getElementById("btnExecute").onclick = doExecute;
+      document.getElementById("btnKill").onclick = doKill;
+      document.getElementById("btnAutoexec").onclick = () => api?.openAutoexecDir?.();
+      document.getElementById("btnWorkspace").onclick = () => api?.openWorkspaceDir?.();
+      document.getElementById("btnClear").onclick = () => {
+        els.editor.value = "";
+        const tab = activeTab();
+        if (tab) tab.code = "";
+        els.charCount.textContent = "0 chars";
+        saveLocal();
+      };
+      document.getElementById("btnSample").onclick = () => {
+        const sample = `-- Maxno sample\nprint("hello from custom ui")\n`;
+        els.editor.value = sample;
+        const tab = activeTab();
+        if (tab) tab.code = sample;
+        els.charCount.textContent = `${sample.length} chars`;
+        saveLocal();
+        showView("editor");
+      };
+
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.addEventListener("click", () => showView(btn.dataset.view));
+      });
+
+      els.editor.addEventListener("input", () => {
+        const tab = activeTab();
+        if (tab) tab.code = els.editor.value;
+        els.charCount.textContent = `${els.editor.value.length} chars`;
+        saveLocal();
+      });
+
+      els.swAutoAttach.onclick = async () => {
+        state.autoAttach = !state.autoAttach;
+        setSwitch(els.swAutoAttach, state.autoAttach);
+        saveLocal();
+        await api?.xenoSetSetting?.("AutoAttach", state.autoAttach ? 1 : 0);
+      };
+      els.swTopmost.onclick = () => {
+        state.topmost = !state.topmost;
+        setSwitch(els.swTopmost, state.topmost);
+        saveLocal();
+        api?.setAlwaysOnTop?.(state.topmost);
+      };
+      els.swTray.onclick = () => {
+        state.tray = !state.tray;
+        setSwitch(els.swTray, state.tray);
+        saveLocal();
+        api?.setMinimizeToTray?.(state.tray);
+      };
+      els.swRpc.onclick = async () => {
+        state.rpc = !state.rpc;
+        setSwitch(els.swRpc, state.rpc);
+        saveLocal();
+        await api?.xenoSetSetting?.("DiscordRPC", state.rpc ? 1 : 0);
+      };
+
+      if (api?.onXenoClients) {
+        api.onXenoClients((list) => renderClients(list));
+      }
+    }
+
+    async function boot() {
+      try {
+        loadLocal();
+        setSwitch(els.swAutoAttach, state.autoAttach);
+        setSwitch(els.swTopmost, state.topmost);
+        setSwitch(els.swTray, state.tray);
+        setSwitch(els.swRpc, state.rpc);
+        renderTabs();
+        const tab = activeTab();
+        els.editor.value = tab ? tab.code : "";
+        els.tabTitle.textContent = tab ? tab.name : "Script";
+        els.charCount.textContent = `${els.editor.value.length} chars`;
+        wire();
+
+        // Show window first so a later native hiccup doesn't look like a blank crash
+        try { api?.readyToShow?.(); } catch (_) {}
+
+        try { if (api?.setAlwaysOnTop) api.setAlwaysOnTop(state.topmost); } catch (_) {}
+        try { if (api?.setMinimizeToTray) api.setMinimizeToTray(state.tray); } catch (_) {}
+        try { if (state.autoAttach) await api?.xenoSetSetting?.("AutoAttach", 1); } catch (_) {}
+        try { if (state.rpc) await api?.xenoSetSetting?.("DiscordRPC", 1); } catch (_) {}
+
+        await refreshVersion();
+        await refreshClients();
+        setStatus(state.clients.length ? "wait" : "", state.clients.length ? "Client found" : "Idle");
+        setInterval(() => { refreshClients().catch(() => {}); }, 3000);
+      } catch (err) {
+        console.error(err);
+        try { api?.readyToShow?.(); } catch (_) {}
+        toast("UI boot error — window kept open");
+      }
+    }
+
+    window.addEventListener("error", (e) => {
+      console.error("window error", e.error || e.message);
+    });
+    window.addEventListener("unhandledrejection", (e) => {
+      console.error("unhandledrejection", e.reason);
+    });
+
+    boot();
+  </script>
+</body>
+</html>

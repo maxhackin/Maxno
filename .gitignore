@@ -1,0 +1,8 @@
+dist/
+*.zip
+*.log
+.DS_Store
+Thumbs.db
+node_modules/
+asar-stage/
+*.asar
