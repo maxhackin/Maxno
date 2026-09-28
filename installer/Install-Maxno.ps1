@@ -21,24 +21,39 @@ try {
   Write-Host "Maxno Installer" -ForegroundColor White
   Write-Host "Installs to: $InstallDir"
 
-  Write-Step "Finding latest release asset..."
-  $releaseApi = "https://api.github.com/repos/$Owner/$Repo/releases/latest"
-  $release = Invoke-RestMethod -Uri $releaseApi -Headers @{ "User-Agent" = "Maxno-Installer" }
-  $asset = $release.assets | Where-Object { $_.name -match "Maxno-portable.*\.zip$" } | Select-Object -First 1
-  if (-not $asset) {
-    $asset = $release.assets | Where-Object { $_.name -like "*.zip" } | Select-Object -First 1
-  }
-  if (-not $asset) {
-    throw "No zip asset found on the latest GitHub release. Tag=$($release.tag_name)"
-  }
+  # Prefer a local portable zip next to this script / bat (easy USB / Discord share)
+  $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+  $localCandidates = @(
+    (Join-Path $scriptDir "Maxno-portable-v1.0.0.zip"),
+    (Join-Path $scriptDir "Maxno-portable.zip"),
+    (Join-Path (Split-Path $scriptDir -Parent) "dist\Maxno-portable-v1.0.0.zip"),
+    (Join-Path (Get-Location) "Maxno-portable-v1.0.0.zip"),
+    (Join-Path (Get-Location) "Maxno-portable.zip")
+  )
+  $localZip = $localCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 
-  Write-Host "Release: $($release.tag_name)"
-  Write-Host "Asset:   $($asset.name) ($([math]::Round($asset.size/1MB,1)) MB)"
+  if ($localZip) {
+    Write-Step "Using local package: $localZip"
+    Copy-Item $localZip $TempZip -Force
+  } else {
+    Write-Step "Finding latest release asset on GitHub..."
+    $releaseApi = "https://api.github.com/repos/$Owner/$Repo/releases/latest"
+    $release = Invoke-RestMethod -Uri $releaseApi -Headers @{ "User-Agent" = "Maxno-Installer" }
+    $asset = $release.assets | Where-Object { $_.name -match "Maxno-portable.*\.zip$" } | Select-Object -First 1
+    if (-not $asset) {
+      $asset = $release.assets | Where-Object { $_.name -like "*.zip" } | Select-Object -First 1
+    }
+    if (-not $asset) {
+      throw "No zip found locally or on GitHub releases. Put Maxno-portable.zip next to Install-Maxno.bat, or upload a release."
+    }
 
-  Write-Step "Downloading..."
-  # Prefer browser_download_url; GitHub may redirect
-  [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-  Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $TempZip -UseBasicParsing
+    Write-Host "Release: $($release.tag_name)"
+    Write-Host "Asset:   $($asset.name) ($([math]::Round($asset.size/1MB,1)) MB)"
+
+    Write-Step "Downloading..."
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $TempZip -UseBasicParsing
+  }
 
   Write-Step "Extracting..."
   if (Test-Path $TempExtract) { Remove-Item $TempExtract -Recurse -Force }
